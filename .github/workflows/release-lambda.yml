@@ -29,8 +29,8 @@ jobs:
           TAG="v${{ github.event.inputs.version }}"
           
           # Find draft release by tag
-          RELEASE_ID=$(gh release list --json tagName,id,isDraft | \
-            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true) | .id')
+          RELEASE_ID=$(gh release list --json tagName,isDraft | \
+            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true)')
           
           if [ -z "$RELEASE_ID" ]; then
             echo "❌ No draft release found for tag $TAG"

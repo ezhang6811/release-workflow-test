@@ -1,0 +1,40 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create build artifacts
+        run: |
+          mkdir -p dist
+          echo "Application binary v${{ github.event.inputs.version }}" > dist/app-${{ github.event.inputs.version }}.tar.gz
+          echo "Documentation for v${{ github.event.inputs.version }}" > dist/docs-${{ github.event.inputs.version }}.zip
+          echo "Configuration files" > dist/config-${{ github.event.inputs.version }}.json
+      
+      - name: Create release draft
+        run: |
+          gh release create "v${{ github.event.inputs.version }}" \
+            --draft \
+            --title "Release v${{ github.event.inputs.version }}" \
+            --notes "## Build Artifacts
+          
+          - Application package: \`app-${{ github.event.inputs.version }}.tar.gz\`
+          - Documentation: \`docs-${{ github.event.inputs.version }}.zip\`
+          - Configuration: \`config-${{ github.event.inputs.version }}.json\`
+          
+          Built from commit: ${{ github.sha }}" \
+            dist/app-${{ github.event.inputs.version }}.tar.gz \
+            dist/docs-${{ github.event.inputs.version }}.zip \
+            dist/config-${{ github.event.inputs.version }}.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

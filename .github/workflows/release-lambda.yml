@@ -1,0 +1,70 @@
+name: Release Lambda
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  update-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create lambda artifacts
+        run: |
+          mkdir -p lambda-dist
+          echo "Lambda layer for v${{ github.event.inputs.version }}" > lambda-dist/lambda-layer-${{ github.event.inputs.version }}.zip
+          echo "Lambda function code" > lambda-dist/lambda-function-${{ github.event.inputs.version }}.zip
+          echo "Lambda deployment template" > lambda-dist/lambda-template-${{ github.event.inputs.version }}.yaml
+      
+      - name: Find and update release draft
+        run: |
+          TAG="v${{ github.event.inputs.version }}"
+          
+          # Find draft release by tag
+          RELEASE_ID=$(gh release list --json tagName,id,isDraft | \
+            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true) | .id')
+          
+          if [ -z "$RELEASE_ID" ]; then
+            echo "❌ No draft release found for tag $TAG"
+            echo "Available releases:"
+            gh release list
+            exit 1
+          fi
+          
+          echo "✅ Found draft release ID: $RELEASE_ID for tag $TAG"
+          
+          # Get current release notes
+          CURRENT_NOTES=$(gh release view $TAG --json body -q .body)
+          
+          # Append lambda section to notes
+          NEW_NOTES="$CURRENT_NOTES
+
+          ## Lambda Components
+          
+          - Lambda layer: \`lambda-layer-${{ github.event.inputs.version }}.zip\`
+          - Lambda function: \`lambda-function-${{ github.event.inputs.version }}.zip\`
+          - Deployment template: \`lambda-template-${{ github.event.inputs.version }}.yaml\`
+          
+          Updated with lambda artifacts at: $(date -u)"
+          
+          # Upload lambda artifacts
+          gh release upload $TAG \
+            lambda-dist/lambda-layer-${{ github.event.inputs.version }}.zip \
+            lambda-dist/lambda-function-${{ github.event.inputs.version }}.zip \
+            lambda-dist/lambda-template-${{ github.event.inputs.version }}.yaml \
+            --clobber
+          
+          # Update release notes
+          gh release edit $TAG --notes "$NEW_NOTES"
+          
+          echo "✅ Updated draft release $TAG with lambda artifacts"
+          
+          # Optionally publish the release (uncomment next line to auto-publish)
+          # gh release edit $TAG --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

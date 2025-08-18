@@ -1,0 +1,66 @@
+name: Test Release Notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Test version (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  test-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release notes template
+        run: |
+          # Create release notes template
+          cat > release_notes.md << 'EOF'
+          This release contains the following upstream components:
+
+          TODO: Add dependency versions here
+          @opentelemetry/api - x.x.x
+          @opentelemetry/auto-configuration-propagators - x.x.x
+          @opentelemetry/auto-instrumentations-node - x.x.x
+          @opentelemetry/api-events - x.x.x
+          @opentelemetry/baggage-span-processor - x.x.x
+          @opentelemetry/core - x.x.x
+          @opentelemetry/exporter-metrics-otlp-grpc - x.x.x
+          @opentelemetry/exporter-metrics-otlp-http - x.x.x
+          @opentelemetry/exporter-trace-otlp-proto - x.x.x
+          @opentelemetry/exporter-logs-otlp-grpc - x.x.x
+          @opentelemetry/exporter-logs-otlp-http - x.x.x
+          @opentelemetry/exporter-logs-otlp-proto - x.x.x
+          @opentelemetry/exporter-zipkin - x.x.x
+          @opentelemetry/id-generator-aws-xray - x.x.x
+          @opentelemetry/instrumentation - x.x.x
+          @opentelemetry/instrumentation-aws-sdk - x.x.x
+          @opentelemetry/otlp-transformer - x.x.x
+          @opentelemetry/propagator-aws-xray - x.x.x
+          @opentelemetry/resource-detector-aws - x.x.x
+          @opentelemetry/resources - x.x.x
+          @opentelemetry/sdk-events - x.x.x
+          @opentelemetry/sdk-logs - x.x.x
+          @opentelemetry/sdk-metrics - x.x.x
+          @opentelemetry/sdk-node - x.x.x
+          @opentelemetry/sdk-trace-base - x.x.x
+          @opentelemetry/semantic-conventions - x.x.x
+          @aws-sdk/client-cloudwatch-logs - x.x.x
+
+          This release also publishes to public ECR and NPM.
+
+          See ADOT node auto-instrumentation Docker image v${{ github.event.inputs.version }} in our public ECR repository:
+          https://gallery.ecr.aws/aws-observability/adot-autoinstrumentation-node
+
+          See version ${{ github.event.inputs.version }} in our NPM repository:
+          https://www.npmjs.com/package/@aws/aws-distro-opentelemetry-node-autoinstrumentation
+          EOF
+
+      - name: Display release notes content
+        run: |
+          echo "=== Release Notes Content ==="
+          cat release_notes.md
+          echo ""
+          echo "=== File Info ==="
+          ls -la release_notes.md
+          wc -l release_notes.md

@@ -12,7 +12,32 @@ permissions:
   contents: write
 
 jobs:
+  check-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for release draft
+        run: |
+          TAG="v${{ github.event.inputs.version }}"
+          
+          # Find draft release by tag
+          RELEASE_ID=$(gh release list --json tagName,id,isDraft | \
+            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true) | .id')
+          
+          if [ -z "$RELEASE_ID" ]; then
+            echo "❌ No draft release found for tag $TAG"
+            echo "Available releases:"
+            gh release list
+            echo ""
+            echo "Please run 'Release Build' workflow first with version ${{ github.event.inputs.version }}"
+            exit 1
+          fi
+          
+          echo "✅ Found draft release for tag $TAG (ID: $RELEASE_ID)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   update-release:
+    needs: check-draft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

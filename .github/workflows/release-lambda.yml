@@ -21,17 +21,23 @@ jobs:
         run: |
           TAG="v${{ github.event.inputs.version }}"
           
-          # Check if draft release exists with this tag
-          if ! gh release view $TAG --json isDraft -q .isDraft 2>/dev/null | grep -q true; then
-            echo "❌ No draft release found for tag $TAG"
+          # Check if release exists and is draft
+          if gh release view $TAG >/dev/null 2>&1; then
+            IS_DRAFT=$(gh release view $TAG --json isDraft -q .isDraft)
+            if [ "$IS_DRAFT" = "true" ]; then
+              echo "✅ Found draft release for tag $TAG"
+            else
+              echo "❌ Release $TAG exists but is not a draft"
+              exit 1
+            fi
+          else
+            echo "❌ No release found for tag $TAG"
             echo "Available releases:"
             gh release list
             echo ""
             echo "Please run 'Release Build' workflow first with version ${{ github.event.inputs.version }}"
             exit 1
           fi
-          
-          echo "✅ Found draft release for tag $TAG"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -18,41 +18,30 @@ jobs:
           cat > release_notes.md << 'EOF'
           This release contains the following upstream components:
 
-          TODO: Add dependency versions here
-          @opentelemetry/api - x.x.x
-          @opentelemetry/auto-configuration-propagators - x.x.x
-          @opentelemetry/auto-instrumentations-node - x.x.x
-          @opentelemetry/api-events - x.x.x
-          @opentelemetry/baggage-span-processor - x.x.x
-          @opentelemetry/core - x.x.x
-          @opentelemetry/exporter-metrics-otlp-grpc - x.x.x
-          @opentelemetry/exporter-metrics-otlp-http - x.x.x
-          @opentelemetry/exporter-trace-otlp-proto - x.x.x
-          @opentelemetry/exporter-logs-otlp-grpc - x.x.x
-          @opentelemetry/exporter-logs-otlp-http - x.x.x
-          @opentelemetry/exporter-logs-otlp-proto - x.x.x
-          @opentelemetry/exporter-zipkin - x.x.x
-          @opentelemetry/id-generator-aws-xray - x.x.x
-          @opentelemetry/instrumentation - x.x.x
-          @opentelemetry/instrumentation-aws-sdk - x.x.x
-          @opentelemetry/otlp-transformer - x.x.x
-          @opentelemetry/propagator-aws-xray - x.x.x
-          @opentelemetry/resource-detector-aws - x.x.x
-          @opentelemetry/resources - x.x.x
-          @opentelemetry/sdk-events - x.x.x
-          @opentelemetry/sdk-logs - x.x.x
-          @opentelemetry/sdk-metrics - x.x.x
-          @opentelemetry/sdk-node - x.x.x
-          @opentelemetry/sdk-trace-base - x.x.x
-          @opentelemetry/semantic-conventions - x.x.x
-          @aws-sdk/client-cloudwatch-logs - x.x.x
+          - `@opentelemetry/api` - <dependency version number>
+          - `@opentelemetry/auto-configuration-propagators` - <dependency version number>
+          - `@opentelemetry/auto-instrumentations-node` - <dependency version number>
+          - `@opentelemetry/core` - <dependency version number>
+          - `@opentelemetry/exporter-metrics-otlp-grpc` - <dependency version number>
+          - `@opentelemetry/exporter-metrics-otlp-http` - <dependency version number>
+          - `@opentelemetry/exporter-trace-otlp-proto` - <dependency version number>
+          - `@opentelemetry/exporter-zipkin` - <dependency version number>
+          - `@opentelemetry/id-generator-aws-xray` - <dependency version number>
+          - `@opentelemetry/instrumentation` - <dependency version number>
+          - `@opentelemetry/instrumentation-aws-sdk` - <dependency version number>
+          - `@opentelemetry/propagator-aws-xray` - <dependency version number>
+          - `@opentelemetry/resource-detector-aws` - <dependency version number>
+          - `@opentelemetry/resources` - <dependency version number>
+          - `@opentelemetry/sdk-metrics` - <dependency version number>
+          - `@opentelemetry/sdk-node` - <dependency version number>
+          - `@opentelemetry/sdk-trace-base` - <dependency version number>
+          - `@opentelemetry/semantic-conventions` - <dependency version number>
+          - `<ANY NEW DEPENDENCIES>` - <new dependency version number>
 
           This release also publishes to public ECR and NPM.
-
-          See ADOT node auto-instrumentation Docker image v${{ github.event.inputs.version }} in our public ECR repository:
+          * See ADOT node auto-instrumentation Docker image v${{ github.event.inputs.version }} in our public ECR repository:
           https://gallery.ecr.aws/aws-observability/adot-autoinstrumentation-node
-
-          See version ${{ github.event.inputs.version }} in our NPM repository:
+          * See version ${{ github.event.inputs.version }} in our NPM repository:
           https://www.npmjs.com/package/@aws/aws-distro-opentelemetry-node-autoinstrumentation
           EOF
 

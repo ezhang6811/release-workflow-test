@@ -19,11 +19,8 @@ jobs:
         run: |
           TAG="v${{ github.event.inputs.version }}"
           
-          # Find draft release by tag
-          RELEASE_ID=$(gh release list --json tagName,id,isDraft | \
-            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true) | .id')
-          
-          if [ -z "$RELEASE_ID" ]; then
+          # Check if draft release exists with this tag
+          if ! gh release view $TAG --json isDraft -q .isDraft 2>/dev/null | grep -q true; then
             echo "❌ No draft release found for tag $TAG"
             echo "Available releases:"
             gh release list
@@ -32,7 +29,7 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Found draft release for tag $TAG (ID: $RELEASE_ID)"
+          echo "✅ Found draft release for tag $TAG"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -53,18 +50,7 @@ jobs:
         run: |
           TAG="v${{ github.event.inputs.version }}"
           
-          # Find draft release by tag
-          RELEASE_ID=$(gh release list --json tagName,isDraft | \
-            jq -r '.[] | select(.tagName == "'$TAG'" and .isDraft == true)')
-          
-          if [ -z "$RELEASE_ID" ]; then
-            echo "❌ No draft release found for tag $TAG"
-            echo "Available releases:"
-            gh release list
-            exit 1
-          fi
-          
-          echo "✅ Found draft release ID: $RELEASE_ID for tag $TAG"
+          echo "✅ Updating draft release for tag $TAG"
           
           # Get current release notes
           CURRENT_NOTES=$(gh release view $TAG --json body -q .body)

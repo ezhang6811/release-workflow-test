@@ -1,0 +1,52 @@
+name: Test CHANGELOG Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to test (e.g., 1.1.0)'
+        required: true
+
+jobs:
+  test-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show original CHANGELOG
+        run: |
+          echo "=== ORIGINAL CHANGELOG ==="
+          cat CHANGELOG.md
+
+      - name: Test release branch CHANGELOG update
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          cp CHANGELOG.md CHANGELOG_release.md
+          
+          # Update for release branch (replace Unreleased with version)
+          sed -i "s/## Unreleased/## ${VERSION} - $(date +%Y-%m-%d)/" CHANGELOG_release.md
+          
+          echo "=== RELEASE BRANCH CHANGELOG ==="
+          cat CHANGELOG_release.md
+
+      - name: Test main branch CHANGELOG update
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          cp CHANGELOG.md CHANGELOG_main.md
+          
+          # Update for main branch (keep Unreleased + add version)
+          sed -i "s/## Unreleased/## Unreleased\n\n## ${VERSION} - $(date +%Y-%m-%d)/" CHANGELOG_main.md
+          
+          echo "=== MAIN BRANCH CHANGELOG ==="
+          cat CHANGELOG_main.md
+
+      - name: Test CHANGELOG extraction for release notes
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          
+          # Extract content from release branch version
+          changelog_content=$(sed -n "/^## ${VERSION}/,/^## /p" CHANGELOG_release.md | head -n -1 | tail -n +2)
+          
+          echo "=== EXTRACTED CHANGELOG CONTENT ==="
+          echo "$changelog_content"

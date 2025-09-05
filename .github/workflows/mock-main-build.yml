@@ -1,0 +1,31 @@
+name: Mock Main Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      should_fail:
+        description: 'Should this build fail? (true/false)'
+        required: true
+        default: 'false'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Simulate build process
+        run: |
+          echo "Starting build process..."
+          sleep 30
+          echo "Build process completed"
+
+      - name: Determine result
+        run: |
+          if [ "${{ github.event.inputs.should_fail }}" = "true" ]; then
+            echo "Build configured to fail"
+            exit 1
+          else
+            echo "Build succeeded"
+          fi

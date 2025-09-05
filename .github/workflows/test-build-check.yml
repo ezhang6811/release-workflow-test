@@ -3,6 +3,10 @@ name: Test Build Check
 on:
   workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   check-build:
     runs-on: ubuntu-latest

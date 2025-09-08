@@ -8,12 +8,17 @@ on:
 jobs:
   changelog-check:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login != 'aws-application-signals-bot' && !contains(github.event.pull_request.labels.*.name, 'Skip Changelog')
     steps:
+      - name: Debug labels
+        run: |
+          echo "PR author: ${{ github.event.pull_request.user.login }}"
+          echo "Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+        if: github.event.pull_request.user.login != 'aws-application-signals-bot' && !contains(github.event.pull_request.labels.*.name, 'Skip Changelog')
       - name: Check CHANGELOG
+        if: github.event.pull_request.user.login != 'aws-application-signals-bot' && !contains(github.event.pull_request.labels.*.name, 'Skip Changelog')
         run: |
           if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "CHANGELOG"; then
             echo "CHANGELOG entry found"

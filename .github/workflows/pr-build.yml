@@ -25,18 +25,16 @@ jobs:
           
       - name: Check CHANGELOG
         run: |
-          # Check for Skip Changelog label
           if echo '${{ toJSON(github.event.pull_request.labels.*.name) }}' | jq -r '.[]' | grep -q "Skip Changelog"; then
             echo "Skip Changelog label found - check passed"
             exit 0
           fi
           
-          # Fetch base branch and check for CHANGELOG modifications
           git fetch origin ${{ github.base_ref }}
           if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "CHANGELOG"; then
             echo "CHANGELOG entry found - check passed"
             exit 0
           fi
           
-          echo "::error::No CHANGELOG entry found. Add a CHANGELOG entry or apply the 'Skip Changelog' label."
+          echo "It looks like you didn't add an entry to CHANGELOG.md. If this change affects the SDK behavior, please update CHANGELOG.md and link this PR in your entry. If this PR does not need a CHANGELOG entry, you can add the 'Skip Changelog' label to this PR."
           exit 1

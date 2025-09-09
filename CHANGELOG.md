@@ -7,11 +7,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 - New feature X
 - Support for Y
-
-### Changed
-- Updated dependency Z
-
-### Fixed
 - Bug fix A
 
 ## 1.0.0 - 2024-08-01

@@ -4,49 +4,114 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to test (e.g., 1.1.0)'
+        description: 'Version number (e.g., 1.0.1)'
         required: true
+        default: '1.1.0'
+      is_patch:
+        description: 'Is this a patch? (true or false)'
+        required: true
+        default: 'false'
+      scenario:
+        description: 'Test scenario'
+        required: true
+        type: choice
+        options:
+          - 'normal-unreleased'
+          - 'empty-unreleased'
+          - 'patch-existing'
+          - 'no-unreleased-section'
 
 jobs:
   test-changelog:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Show original CHANGELOG
+      - uses: actions/checkout@v4
+      
+      - name: Setup test scenario
         run: |
-          echo "=== ORIGINAL CHANGELOG ==="
+          VERSION="${{ github.event.inputs.version }}"
+          SCENARIO="${{ github.event.inputs.scenario }}"
+          
+          case $SCENARIO in
+            "normal-unreleased")
+              cat > CHANGELOG.md << 'EOF'
+          # Changelog
+          
+          ## Unreleased
+          
+          ### Added
+          - New feature X
+          - Support for Y
+          
+          ### Fixed
+          - Bug fix A
+          
+          ## 1.0.0 - 2024-08-01
+          
+          ### Added
+          - Initial release
+          EOF
+              ;;
+              
+            "empty-unreleased")
+              cat > CHANGELOG.md << 'EOF'
+          # Changelog
+          
+          ## Unreleased
+          
+          ## 1.0.0 - 2024-08-01
+          
+          ### Added
+          - Initial release
+          EOF
+              ;;
+              
+            "patch-existing")
+              cat > CHANGELOG.md << 'EOF'
+          # Changelog
+          
+          ## Unreleased
+          
+          ## 1.0.1 - 2025-09-08
+          
+          ### Fixed
+          - Critical security fix
+          
+          ## 1.0.0 - 2024-08-01
+          
+          ### Added
+          - Initial release
+          EOF
+              ;;
+              
+            "no-unreleased-section")
+              cat > CHANGELOG.md << 'EOF'
+          # Changelog
+          
+          ## 1.0.0 - 2024-08-01
+          
+          ### Added
+          - Initial release
+          EOF
+              ;;
+          esac
+          
+          echo "=== BEFORE ==="
           cat CHANGELOG.md
-
-      - name: Test release branch CHANGELOG update
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          cp CHANGELOG.md CHANGELOG_release.md
           
-          # Update for release branch (replace Unreleased with version)
-          sed -i "s/## Unreleased/## ${VERSION} - $(date +%Y-%m-%d)/" CHANGELOG_release.md
-          
-          echo "=== RELEASE BRANCH CHANGELOG ==="
-          cat CHANGELOG_release.md
-
-      - name: Test main branch CHANGELOG update
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          cp CHANGELOG.md CHANGELOG_main.md
-          
-          # Update for main branch (keep Unreleased + add version)
-          sed -i "s/## Unreleased/## Unreleased\n\n## ${VERSION} - $(date +%Y-%m-%d)/" CHANGELOG_main.md
-          
-          echo "=== MAIN BRANCH CHANGELOG ==="
-          cat CHANGELOG_main.md
-
-      - name: Test CHANGELOG extraction for release notes
+      - name: Test CHANGELOG update (non-patch)
+        if: github.event.inputs.is_patch != 'true'
         run: |
           VERSION="${{ github.event.inputs.version }}"
           
-          # Extract content from release branch version
-          changelog_content=$(sed -n "/^## ${VERSION}/,/^## /p" CHANGELOG_release.md | head -n -1 | tail -n +2)
+          # Replace "## Unreleased" with "## ${VERSION} - $(date +%Y-%m-%d)"
+          sed -i "s/## Unreleased/## ${VERSION} - $(date +%Y-%m-%d)/" CHANGELOG.md
           
-          echo "=== EXTRACTED CHANGELOG CONTENT ==="
-          echo "$changelog_content"
+          echo "=== AFTER (non-patch) ==="
+          cat CHANGELOG.md
+          
+      - name: Test CHANGELOG update (patch - should skip)
+        if: github.event.inputs.is_patch == 'true'
+        run: |
+          echo "=== PATCH RELEASE - NO CHANGES ==="
+          cat CHANGELOG.md

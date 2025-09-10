@@ -1,0 +1,130 @@
+name: Test GitHub Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to tag the release with, e.g., 1.2.0
+        required: true
+        default: "1.0.0-test"
+
+env:
+  ARTIFACT_NAME: aws-aws-distro-opentelemetry-node-autoinstrumentation-${{ github.event.inputs.version }}.tgz
+
+permissions:
+  contents: write
+
+jobs:
+  mock-artifacts:
+    runs-on: ubuntu-latest
+    outputs:
+      layer-note: ${{ steps.layer-note.outputs.layer-note }}
+    steps:
+      - name: Create mock SDK artifact
+        run: |
+          echo "Mock SDK content" > ${{ env.ARTIFACT_NAME }}
+      
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}
+      
+      - name: Create mock layer artifact
+        run: |
+          echo "Mock layer content" > layer.zip
+      
+      - name: Upload layer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: layer.zip
+          path: layer.zip
+      
+      - name: Generate mock layer note
+        id: layer-note
+        run: |
+          cat > layer-note.md << EOF
+          | Region | Layer ARN |
+          |  ----  | ----  |
+          | us-east-1 | arn:aws:lambda:us-east-1:123456789012:layer:AWSOpenTelemetryDistroJs:1 |
+          | us-west-2 | arn:aws:lambda:us-west-2:123456789012:layer:AWSOpenTelemetryDistroJs:1 |
+          EOF
+          
+          {
+            echo "layer-note<<EOF"
+            cat layer-note.md
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+  publish-github:
+    needs: mock-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo @ SHA - ${{ github.sha }}
+        uses: actions/checkout@v4
+      
+      - name: Download SDK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+      
+      - name: Download layer.zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: layer.zip
+
+      # Publish to GitHub releases
+      - name: Create GH release
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create mock package.json for dependency extraction
+          mkdir -p aws-distro-opentelemetry-node-autoinstrumentation
+          cat > aws-distro-opentelemetry-node-autoinstrumentation/package.json << EOF
+          {
+            "dependencies": {
+              "@opentelemetry/sdk-node": "0.45.0",
+              "@opentelemetry/instrumentation": "0.46.0"
+            }
+          }
+          EOF
+
+          # Generate dependency versions from package.json
+          DEPS=$(node -e "
+            const pkg = require('./aws-distro-opentelemetry-node-autoinstrumentation/package.json');
+            const deps = Object.entries(pkg.dependencies || {})
+              .map(([name, version]) => \`- \\\`\${name}\\\` - \${version}\`)
+              .join('\n');
+            console.log(deps);
+          ")
+
+          # Create release notes
+          cat > release_notes.md << EOF
+          This release contains the following upstream components:
+
+          $DEPS
+
+          This release also publishes to public ECR and NPM.
+          * See ADOT node auto-instrumentation Docker image v${{ github.event.inputs.version }} in our public ECR repository:
+          https://gallery.ecr.aws/aws-observability/adot-autoinstrumentation-node
+          * See version ${{ github.event.inputs.version }} in our NPM repository:
+          https://www.npmjs.com/package/@aws/aws-distro-opentelemetry-node-autoinstrumentation
+
+          This release also includes the AWS OpenTelemetry Lambda Layer for JavaScript version ${{ github.event.inputs.version }}-$(echo $GITHUB_SHA | cut -c1-7).
+
+          Lambda Layer ARNs:
+          ${{ needs.mock-artifacts.outputs.layer-note }}
+          EOF
+
+          shasum -a 256 ${{ env.ARTIFACT_NAME }} > ${{ env.ARTIFACT_NAME }}.sha256
+          shasum -a 256 layer.zip > layer.zip.sha256
+
+          gh release create --target "$GITHUB_REF_NAME" \
+             --title "Release v${{ github.event.inputs.version }}" \
+             --notes-file release_notes.md \
+             --draft \
+             "v${{ github.event.inputs.version }}" \
+             ${{ env.ARTIFACT_NAME }} \
+             ${{ env.ARTIFACT_NAME }}.sha256 \
+             layer.zip \
+             layer.zip.sha256

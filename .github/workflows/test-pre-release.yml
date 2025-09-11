@@ -49,7 +49,6 @@ jobs:
           git push origin "v${VERSION}_release"
           
       - name: Update CHANGELOG for release
-        if: github.event.inputs.is_patch != 'true'
         run: |
           # Configure git
           git config --global user.name "github-actions[bot]"

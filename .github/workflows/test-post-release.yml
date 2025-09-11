@@ -1,0 +1,73 @@
+name: Test Post-Release - Merge to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        default: '1.1.0'
+
+jobs:
+  test-post-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          
+      - name: Setup variables
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          MAJOR_MINOR=$(echo $VERSION | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+/\1/')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "MAJOR_MINOR=$MAJOR_MINOR" >> $GITHUB_ENV
+          
+      - name: Show main CHANGELOG before merge
+        run: |
+          echo "=== MAIN CHANGELOG BEFORE MERGE ==="
+          cat CHANGELOG.md
+          
+      - name: Checkout from release branch and create merge branch
+        run: |
+          RELEASE_BRANCH="release/v${MAJOR_MINOR}.x"
+          
+          # Fetch and checkout from release branch
+          git fetch origin $RELEASE_BRANCH
+          git checkout -b "post-release-${VERSION}" origin/$RELEASE_BRANCH
+          
+          echo "=== RELEASE BRANCH CHANGELOG ==="
+          cat CHANGELOG.md
+          
+      - name: Update version for next dev cycle
+        run: |
+          # Add "## Unreleased" section back to top
+          sed -i "s/# Changelog/# Changelog\n\n## Unreleased/" CHANGELOG.md
+          
+          echo "=== CHANGELOG AFTER ADDING UNRELEASED ==="
+          cat CHANGELOG.md
+          
+          git add CHANGELOG.md
+          git commit -m "Prepare main for next development cycle after ${VERSION}"
+          git push origin "post-release-${VERSION}"
+          
+      - name: Create PR against main
+        run: |
+          gh pr create --title "Test Post-release: Prepare main for next dev cycle after ${VERSION}" \
+                       --body "This PR prepares the main branch for the next development cycle after version ${VERSION}.
+          
+          This is a test of the post-release workflow." \
+                       --head post-release-${{ github.event.inputs.version }} \
+                       --base main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Show final state
+        run: |
+          echo "=== FINAL CHANGELOG STATE ==="
+          cat CHANGELOG.md
+          echo "=== CURRENT BRANCH ==="
+          git branch --show-current
+          echo ""
+          echo "This branch would be merged back to main via PR"

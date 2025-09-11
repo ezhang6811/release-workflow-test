@@ -12,6 +12,10 @@ on:
         required: true
         default: 'false'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   test-pre-release:
     runs-on: ubuntu-latest
@@ -47,6 +51,10 @@ jobs:
       - name: Update CHANGELOG for release
         if: github.event.inputs.is_patch != 'true'
         run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           echo "=== BEFORE CHANGELOG UPDATE ==="
           cat CHANGELOG.md
           

@@ -35,29 +35,20 @@ jobs:
           
       - name: Checkout from release branch and create merge branch
         run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           RELEASE_BRANCH="release/v${MAJOR_MINOR}.x"
           
           # Fetch and checkout from release branch
           git fetch origin $RELEASE_BRANCH
           git checkout -b "post-release-${VERSION}" origin/$RELEASE_BRANCH
           
-          echo "=== RELEASE BRANCH CHANGELOG ==="
+          echo "=== RELEASE BRANCH CHANGELOG (will be merged to main as-is) ==="
           cat CHANGELOG.md
           
-      - name: Update version for next dev cycle
-        run: |
-          # Configure git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Add "## Unreleased" section back to top
-          sed -i "s/# Changelog/# Changelog\n\n## Unreleased/" CHANGELOG.md
-          
-          echo "=== CHANGELOG AFTER ADDING UNRELEASED ==="
-          cat CHANGELOG.md
-          
-          git add CHANGELOG.md
-          git commit -m "Prepare main for next development cycle after ${VERSION}"
+          # Push the branch without any modifications
           git push origin "post-release-${VERSION}"
           
       - name: Create PR against main

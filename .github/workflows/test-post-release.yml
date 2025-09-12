@@ -41,20 +41,12 @@ jobs:
           
           RELEASE_BRANCH="release/v${MAJOR_MINOR}.x"
           
-          # First, extract just the Unreleased content from main (no header)
-          git checkout main
-          echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
-          sed -n '/## Unreleased/,/^## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2
-          
-          # Save the unreleased content to a temp file, removing trailing empty lines
-          sed -n '/## Unreleased/,/^## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2 | sed -e :a -e '/^\s*$/N;ba' -e 's/\n\s*$//' > /tmp/unreleased_content.txt
-          
           # Now checkout from release branch
           git fetch origin $RELEASE_BRANCH
           git checkout -b "post-release-${VERSION}" origin/$RELEASE_BRANCH
-          
-          echo "=== RELEASE BRANCH CHANGELOG BEFORE MERGE ==="
-          cat CHANGELOG.md
+
+          git fetch origin main
+          git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 | sed '/^$/d' > /tmp/unreleased_content.txt
           
           # Insert the content right after the existing "## Unreleased" header
           sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md

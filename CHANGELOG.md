@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## v1.0.1 - 2025-09-12
+
 - patch change for v1.0.1
 - another patch change blah blah
 

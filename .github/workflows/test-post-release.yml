@@ -44,10 +44,10 @@ jobs:
           # First, extract just the Unreleased content from main (no header)
           git checkout main
           echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
-          sed -n '/## Unreleased/,/## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2
+          sed -n '/## Unreleased/,/^## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2
           
           # Save the unreleased content to a temp file
-          sed -n '/## Unreleased/,/## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2 > /tmp/unreleased_content.txt
+          sed -n '/## Unreleased/,/^## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2 > /tmp/unreleased_content.txt
           
           # Now checkout from release branch
           git fetch origin $RELEASE_BRANCH
@@ -64,6 +64,21 @@ jobs:
           
           git add CHANGELOG.md
           git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
+          
+          # Now merge main into this branch to resolve conflicts automatically
+          echo "=== MERGING MAIN TO RESOLVE CONFLICTS ==="
+          git fetch origin main
+          
+          # Attempt to merge main
+          if ! git merge origin/main --no-edit; then
+            echo "Merge conflict detected, auto-resolving CHANGELOG..."
+            
+            # Auto-resolve by keeping our version (which has the combined content)
+            git checkout --ours CHANGELOG.md
+            git add CHANGELOG.md
+            git commit -m "Auto-resolve CHANGELOG merge conflict"
+          fi
+          
           git push origin "post-release-${VERSION}"
           
       - name: Create PR against main

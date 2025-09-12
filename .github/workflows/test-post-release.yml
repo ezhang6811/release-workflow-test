@@ -41,14 +41,29 @@ jobs:
           
           RELEASE_BRANCH="release/v${MAJOR_MINOR}.x"
           
-          # Fetch and checkout from release branch
+          # First, extract just the Unreleased content from main (no header)
+          git checkout main
+          echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
+          sed -n '/## Unreleased/,/## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2
+          
+          # Save the unreleased content to a temp file
+          sed -n '/## Unreleased/,/## v[0-9]/p' CHANGELOG.md | sed '$d' | tail -n +2 > /tmp/unreleased_content.txt
+          
+          # Now checkout from release branch
           git fetch origin $RELEASE_BRANCH
           git checkout -b "post-release-${VERSION}" origin/$RELEASE_BRANCH
           
-          echo "=== RELEASE BRANCH CHANGELOG (will be merged to main as-is) ==="
+          echo "=== RELEASE BRANCH CHANGELOG BEFORE MERGE ==="
           cat CHANGELOG.md
           
-          # Push the branch without any modifications
+          # Insert the content right after the existing "## Unreleased" header
+          sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
+          
+          echo "=== CHANGELOG AFTER MERGING UNRELEASED CONTENT ==="
+          cat CHANGELOG.md
+          
+          git add CHANGELOG.md
+          git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
           git push origin "post-release-${VERSION}"
           
       - name: Create PR against main

@@ -100,13 +100,13 @@ jobs:
             
             git add CHANGELOG.md
             git commit -m "Add new unreleased changes for post-release ${VERSION}"
+
+            # Merge main but always keep our CHANGELOG
+            echo "=== MERGING MAIN WITH OURS STRATEGY ==="
+            git fetch origin main
+            git merge origin/main --no-edit -X ours
           fi
-          
-          echo "=== CHANGELOG AFTER MERGING UNRELEASED CONTENT ==="
-          cat CHANGELOG.md
-          cat CHANGELOG.md > /tmp/final_changelog.md
-          
-          # Push the initial version
+        
           git push origin "post-release-${VERSION}"
           
       - name: Create PR against main

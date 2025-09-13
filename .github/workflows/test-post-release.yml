@@ -61,14 +61,40 @@ jobs:
             
             echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
             cat /tmp/unreleased_content.txt
-            
+             
             # Insert the content right after the existing "## Unreleased" header
             sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
 
             git add CHANGELOG.md
             git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
           else
-            echo "=== NON-PATCH RELEASE: SKIPPING UNRELEASED CONTENT MERGE ==="
+            echo "=== NON-PATCH RELEASE: EXTRACTING UNRELEASED COMMITS UP TO VERSION COMMIT ==="
+
+            # Get the first commit under the specific version number
+            FIRST_VERSION_COMMIT=$(sed -n "/^## v${VERSION}/,/^## v[0-9]/p" CHANGELOG.md | sed '$d' | tail -n +3 | head -n 1)
+            echo "First commit under v${VERSION}: $FIRST_VERSION_COMMIT"
+            
+            git fetch origin main
+            
+            # Get all unreleased commits from main
+            git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 > /tmp/all_unreleased.txt
+            
+            # Extract commits up to (but not including) the first version commit
+            if grep -q "$FIRST_VERSION_COMMIT" /tmp/all_unreleased.txt; then
+              sed "/$FIRST_VERSION_COMMIT/q" /tmp/all_unreleased.txt | sed '$d' | sed '/^$/d' > /tmp/new_unreleased.txt
+            else
+              # If not found, take all unreleased commits
+              cat /tmp/all_unreleased.txt | sed '/^$/d' > /tmp/new_unreleased.txt
+            fi
+            
+            echo "=== NEW UNRELEASED COMMITS TO ADD ==="
+            cat /tmp/new_unreleased.txt
+            
+            # Insert under Unreleased header
+            sed -i '/## Unreleased/r /tmp/new_unreleased.txt' CHANGELOG.md
+            
+            git add CHANGELOG.md
+            git commit -m "Add new unreleased changes for post-release ${VERSION}"
           fi
           
           echo "=== CHANGELOG AFTER MERGING UNRELEASED CONTENT ==="

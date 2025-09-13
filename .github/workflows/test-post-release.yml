@@ -79,12 +79,17 @@ jobs:
             # Get all unreleased commits from main
             git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 > /tmp/all_unreleased.txt
             
+            echo "=== ALL UNRELEASED FROM MAIN ==="
+            cat /tmp/all_unreleased.txt
+            
             # Extract commits up to (but not including) the first version commit
             if grep -q "$FIRST_VERSION_COMMIT" /tmp/all_unreleased.txt; then
               sed "/$FIRST_VERSION_COMMIT/,\$d" /tmp/all_unreleased.txt | sed '/^$/d' > /tmp/new_unreleased.txt
+              echo "=== FOUND BOUNDARY COMMIT, EXTRACTED BEFORE IT ==="
             else
               # If not found, take all unreleased commits
               cat /tmp/all_unreleased.txt | sed '/^$/d' > /tmp/new_unreleased.txt
+              echo "=== BOUNDARY COMMIT NOT FOUND, TAKING ALL ==="
             fi
             
             echo "=== NEW UNRELEASED COMMITS TO ADD ==="

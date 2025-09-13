@@ -61,12 +61,23 @@ jobs:
           echo "=== MERGING MAIN TO RESOLVE CONFLICTS ==="
           git fetch origin main
           
+          # Get the current commit hash to reference our correct CHANGELOG
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          echo "Current commit with correct CHANGELOG: $CURRENT_COMMIT"
+          
           # Attempt to merge main
           if ! git merge origin/main --no-edit; then
-            echo "Merge conflict detected, auto-resolving CHANGELOG..."
+            echo "Merge conflict detected, restoring correct CHANGELOG..."
             
-            # Auto-resolve by keeping our version (which has the combined content)
-            git checkout --ours CHANGELOG.md
+            echo "=== CHANGELOG DURING CONFLICT ==="
+            cat CHANGELOG.md
+            
+            # Restore our correct CHANGELOG from the commit we just made
+            git show $CURRENT_COMMIT:CHANGELOG.md > CHANGELOG.md
+            
+            echo "=== RESTORED CHANGELOG ==="
+            cat CHANGELOG.md
+            
             git add CHANGELOG.md
             git commit -m "Auto-resolve CHANGELOG merge conflict"
           fi

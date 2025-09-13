@@ -81,7 +81,7 @@ jobs:
             
             # Extract commits up to (but not including) the first version commit
             if grep -q "$FIRST_VERSION_COMMIT" /tmp/all_unreleased.txt; then
-              sed "/$FIRST_VERSION_COMMIT/q" /tmp/all_unreleased.txt | sed '$d' | sed '/^$/d' > /tmp/new_unreleased.txt
+              sed "/$FIRST_VERSION_COMMIT/,\$d" /tmp/all_unreleased.txt | sed '/^$/d' > /tmp/new_unreleased.txt
             else
               # If not found, take all unreleased commits
               cat /tmp/all_unreleased.txt | sed '/^$/d' > /tmp/new_unreleased.txt

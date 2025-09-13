@@ -61,12 +61,15 @@ jobs:
           echo "=== MERGING MAIN TO RESOLVE CONFLICTS ==="
           git fetch origin main
           
+          # Save our correctly merged CHANGELOG before attempting merge
+          cp CHANGELOG.md /tmp/correct_changelog.md
+          
           # Attempt to merge main
           if ! git merge origin/main --no-edit; then
-            echo "Merge conflict detected, auto-resolving CHANGELOG..."
+            echo "Merge conflict detected, restoring correct CHANGELOG..."
             
-            # Auto-resolve by keeping our version (which has the combined content)
-            git checkout --ours CHANGELOG.md
+            # Restore our correct CHANGELOG
+            cp /tmp/correct_changelog.md CHANGELOG.md
             git add CHANGELOG.md
             git commit -m "Auto-resolve CHANGELOG merge conflict"
           fi

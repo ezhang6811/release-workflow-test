@@ -7,6 +7,10 @@ on:
         description: 'Version number (e.g., 1.0.1)'
         required: true
         default: '1.1.0'
+      is_patch:
+        description: 'Is this a patch release? (true or false)'
+        required: true
+        default: 'false'
 
 permissions:
   contents: write
@@ -45,11 +49,24 @@ jobs:
           git fetch origin $RELEASE_BRANCH
           git checkout -b "post-release-${VERSION}" origin/$RELEASE_BRANCH
 
-          git fetch origin main
-          git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 | sed '/^$/d' > /tmp/unreleased_content.txt
+          echo "=== RELEASE BRANCH CHANGELOG BEFORE MERGE ==="
+          cat CHANGELOG.md
           
-          # Insert the content right after the existing "## Unreleased" header
-          sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
+          # Only merge unreleased content for patch releases
+          if [[ "${{ github.event.inputs.is_patch }}" == "true" ]]; then
+            echo "=== PATCH RELEASE: MERGING UNRELEASED CONTENT ==="
+            
+            git fetch origin main
+            git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 | sed '/^$/d' > /tmp/unreleased_content.txt
+            
+            echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
+            cat /tmp/unreleased_content.txt
+            
+            # Insert the content right after the existing "## Unreleased" header
+            sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
+          else
+            echo "=== NON-PATCH RELEASE: SKIPPING UNRELEASED CONTENT MERGE ==="
+          fi
           
           echo "=== CHANGELOG AFTER MERGING UNRELEASED CONTENT ==="
           cat CHANGELOG.md

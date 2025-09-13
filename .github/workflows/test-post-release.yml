@@ -64,6 +64,9 @@ jobs:
             
             # Insert the content right after the existing "## Unreleased" header
             sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
+
+            git add CHANGELOG.md
+            git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
           else
             echo "=== NON-PATCH RELEASE: SKIPPING UNRELEASED CONTENT MERGE ==="
           fi
@@ -71,9 +74,6 @@ jobs:
           echo "=== CHANGELOG AFTER MERGING UNRELEASED CONTENT ==="
           cat CHANGELOG.md
           cat CHANGELOG.md > /tmp/final_changelog.md
-          
-          git add CHANGELOG.md
-          git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
           
           # Push the initial version
           git push origin "post-release-${VERSION}"

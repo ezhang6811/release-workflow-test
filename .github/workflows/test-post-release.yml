@@ -89,14 +89,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Fix CHANGELOG in existing PR
-        if: github.event.inputs.is_patch == 'true'
-        run: |
-          cat /tmp/final_changelog.md > CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m "Fix CHANGELOG.md to ensure correct formatting after merging unreleased changes"
-          git push origin "post-release-${VERSION}"
-          
       - name: Show final state
         run: |
           echo "=== FINAL CHANGELOG STATE ==="

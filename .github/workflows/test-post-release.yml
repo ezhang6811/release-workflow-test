@@ -64,6 +64,7 @@ jobs:
           # Use merge strategy to always keep our version of CHANGELOG
           git merge origin/main --no-edit -X ours
           
+          # Push the initial version
           git push origin "post-release-${VERSION}"
           
       - name: Create PR against main
@@ -76,6 +77,26 @@ jobs:
                        --base main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Fix CHANGELOG in existing PR
+        run: |
+          # Re-extract and fix the CHANGELOG after PR creation
+          git fetch origin main
+          git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 | sed '/^$/d' > /tmp/unreleased_content_fix.txt
+          
+          # Start fresh with release branch CHANGELOG
+          git fetch origin release/v${MAJOR_MINOR}.x
+          git show origin/release/v${MAJOR_MINOR}.x:CHANGELOG.md > CHANGELOG.md
+          
+          # Re-insert the unreleased content
+          sed -i '/## Unreleased/r /tmp/unreleased_content_fix.txt' CHANGELOG.md
+          
+          echo "=== FIXED CHANGELOG ==="
+          cat CHANGELOG.md
+          
+          git add CHANGELOG.md
+          git commit -m "Fix CHANGELOG structure in post-release PR"
+          git push origin "post-release-${VERSION}"
           
       - name: Show final state
         run: |

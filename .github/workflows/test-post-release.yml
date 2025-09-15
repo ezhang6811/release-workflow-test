@@ -70,7 +70,7 @@ jobs:
             cat CHANGELOG.md
             
             # Insert patch release section before the first existing version
-            awk -i inplace '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); print ""; inserted=1 } {print}' CHANGELOG.md
+            awk -i inplace '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); inserted=1 } {print}' CHANGELOG.md
 
             git add CHANGELOG.md
             git commit -m "Insert patch release entries into main's CHANGELOG"
@@ -137,8 +137,10 @@ jobs:
           git merge origin/main || true
           git checkout --ours CHANGELOG.md
           git add CHANGELOG.md
-          git commit -m "Force our CHANGELOG to override merge conflicts"
-          git push origin "post-release-${VERSION}"
+          if ! git diff --quiet --cached; then
+            git commit -m "Force our CHANGELOG to override merge conflicts"
+            git push origin "post-release-${VERSION}"
+          fi
           
       - name: Show final state
         run: |

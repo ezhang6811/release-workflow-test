@@ -137,8 +137,10 @@ jobs:
           git merge origin/main || true
           git checkout --ours CHANGELOG.md
           git add CHANGELOG.md
-          git commit -m "Force our CHANGELOG to override merge conflicts"
-          git push origin "post-release-${VERSION}"
+          if ! git diff --quiet --cached; then
+            git commit -m "Force our CHANGELOG to override merge conflicts"
+            git push origin "post-release-${VERSION}"
+          fi
           
       - name: Show final state
         run: |

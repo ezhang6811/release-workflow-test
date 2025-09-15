@@ -69,8 +69,9 @@ jobs:
             echo "=== MAIN'S CHANGELOG ==="
             cat CHANGELOG.md
             
-            # Insert patch release section after Unreleased
-            sed -i '/## Unreleased/r /tmp/patch_release_section.txt' CHANGELOG.md
+            # Insert patch release section before the first existing version
+            awk '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); print ""; inserted=1 } {print}' CHANGELOG.md > /tmp/updated_changelog.md
+            mv /tmp/updated_changelog.md CHANGELOG.md
 
             git add CHANGELOG.md
             git commit -m "Insert patch release entries into main's CHANGELOG"
@@ -104,6 +105,8 @@ jobs:
             
             # Insert under Unreleased header
             sed -i '/## Unreleased/r /tmp/new_unreleased.txt' CHANGELOG.md
+
+            cat CHANGELOG.md > /tmp/final_changelog.md
             
             git add CHANGELOG.md
             git commit -m "Add new unreleased changes for post-release ${VERSION}"
@@ -126,6 +129,17 @@ jobs:
                        --base main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Force our CHANGELOG to override merge conflicts
+        run: |
+          echo "=== FORCING OUR CHANGELOG TO OVERRIDE CONFLICTS ==="
+          
+          # Restore our correct CHANGELOG
+          git merge origin/main || true
+          git checkout --ours CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "Force our CHANGELOG to override merge conflicts"
+          git push origin "post-release-${VERSION}"
           
       - name: Show final state
         run: |

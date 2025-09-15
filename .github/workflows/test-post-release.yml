@@ -70,8 +70,7 @@ jobs:
             cat CHANGELOG.md
             
             # Insert patch release section before the first existing version
-            awk '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); print ""; inserted=1 } {print}' CHANGELOG.md > /tmp/updated_changelog.md
-            mv /tmp/updated_changelog.md CHANGELOG.md
+            awk -i inplace '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); print ""; inserted=1 } {print}' CHANGELOG.md
 
             git add CHANGELOG.md
             git commit -m "Insert patch release entries into main's CHANGELOG"

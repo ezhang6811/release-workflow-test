@@ -54,19 +54,27 @@ jobs:
           
           # Only merge unreleased content for patch releases
           if [[ "${{ github.event.inputs.is_patch }}" == "true" ]]; then
-            echo "=== PATCH RELEASE: MERGING UNRELEASED CONTENT ==="
+            echo "=== PATCH RELEASE: INSERTING PATCH ENTRIES INTO MAIN'S CHANGELOG ==="
             
+            # Extract patch release entries from release branch
+            sed -n "/^## v${VERSION}/,/^## v[0-9]/p" CHANGELOG.md | sed '$d' > /tmp/patch_release_section.txt
+            
+            echo "=== PATCH RELEASE SECTION ==="
+            cat /tmp/patch_release_section.txt
+            
+            # Start with main's CHANGELOG (which has all latest updates)
             git fetch origin main
-            git show origin/main:CHANGELOG.md | sed -n '/## Unreleased/,/^## v[0-9]/p' | sed '$d' | tail -n +2 | sed '/^$/d' > /tmp/unreleased_content.txt
+            git show origin/main:CHANGELOG.md > CHANGELOG.md
             
-            echo "=== MAIN BRANCH UNRELEASED CONTENT ==="
-            cat /tmp/unreleased_content.txt
-             
-            # Insert the content right after the existing "## Unreleased" header
-            sed -i '/## Unreleased/r /tmp/unreleased_content.txt' CHANGELOG.md
+            echo "=== MAIN'S CHANGELOG ==="
+            cat CHANGELOG.md
+            
+            # Insert patch release section before the first existing version
+            awk '/^## v[0-9]/ && !inserted { print ""; system("cat /tmp/patch_release_section.txt"); print ""; inserted=1 } {print}' CHANGELOG.md > /tmp/updated_changelog.md
+            mv /tmp/updated_changelog.md CHANGELOG.md
 
             git add CHANGELOG.md
-            git commit -m "Merge unreleased changes from main for post-release ${VERSION}"
+            git commit -m "Insert patch release entries into main's CHANGELOG"
           else
             echo "=== NON-PATCH RELEASE: EXTRACTING UNRELEASED COMMITS UP TO VERSION COMMIT ==="
 
@@ -97,6 +105,8 @@ jobs:
             
             # Insert under Unreleased header
             sed -i '/## Unreleased/r /tmp/new_unreleased.txt' CHANGELOG.md
+
+            cat CHANGELOG.md > /tmp/final_changelog.md
             
             git add CHANGELOG.md
             git commit -m "Add new unreleased changes for post-release ${VERSION}"
@@ -119,6 +129,17 @@ jobs:
                        --base main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Force our CHANGELOG to override merge conflicts
+        run: |
+          echo "=== FORCING OUR CHANGELOG TO OVERRIDE CONFLICTS ==="
+          
+          # Restore our correct CHANGELOG
+          git merge origin/main || true
+          git checkout --ours CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "Force our CHANGELOG to override merge conflicts"
+          git push origin "post-release-${VERSION}"
           
       - name: Show final state
         run: |

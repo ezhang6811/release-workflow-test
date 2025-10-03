@@ -109,21 +109,21 @@ jobs:
           ")
 
           # Extract CHANGELOG entries for this version
-          CHANGELOG_ENTRIES=$(python3 -c "
-            import re
-            with open('CHANGELOG.md', 'r') as f:
-                content = f.read()
-            version_pattern = r'## v${{ github.event.inputs.version }}.*?\n(.*?)(?=\n## |\Z)'
-            version_match = re.search(version_pattern, content, re.DOTALL)
-            if version_match:
-                entries = version_match.group(1).strip()
-                if entries:
-                    print(entries)
-          ")
+          # CHANGELOG_ENTRIES=$(python3 -c "
+          #   import re
+          #   with open('CHANGELOG.md', 'r') as f:
+          #       content = f.read()
+          #   version_pattern = r'## v${{ github.event.inputs.version }}.*?\n(.*?)(?=\n## |\Z)'
+          #   version_match = re.search(version_pattern, content, re.DOTALL)
+          #   if version_match:
+          #       entries = version_match.group(1).strip()
+          #       if entries:
+          #           print(entries)
+          # ")
 
           # Create release notes
           cat > release_notes.md << EOF
-          $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)This release contains the following upstream components:
+          # $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)This release contains the following upstream components:
 
           $DEPS
 

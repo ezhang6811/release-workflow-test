@@ -123,7 +123,9 @@ jobs:
 
           # Create release notes
           cat > release_notes.md << EOF
-          $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)## Upstream Components
+          $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)
+          
+          ## Upstream Components
 
           $DEPS
 
@@ -136,7 +138,7 @@ jobs:
           https://pypi.org/project/aws-opentelemetry-distro/
 
           ## Lambda Layer
-          
+
           This release also includes the AWS OpenTelemetry Lambda Layer for Python version ${{ github.event.inputs.version }}-$(echo $GITHUB_SHA | cut -c1-7).
 
           ${{ needs.mock-artifacts.outputs.layer-note }}

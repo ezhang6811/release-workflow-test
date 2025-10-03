@@ -123,9 +123,11 @@ jobs:
 
           # Create release notes
           cat > release_notes.md << EOF
-          $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)This release contains the following upstream components:
+          $(if [ -n "$CHANGELOG_ENTRIES" ]; then echo "## What's Changed"; echo "$CHANGELOG_ENTRIES"; echo ""; fi)## Upstream Components
 
           $DEPS
+
+          ## Release Artifacts
 
           This release also publishes to public ECR and PyPi.
           * See ADOT Python auto-instrumentation Docker image v${{ github.event.inputs.version }} in our public ECR repository:
@@ -133,9 +135,10 @@ jobs:
           * See version ${{ github.event.inputs.version }} in our PyPi repository:
           https://pypi.org/project/aws-opentelemetry-distro/
 
+          ## Lambda Layer
+          
           This release also includes the AWS OpenTelemetry Lambda Layer for Python version ${{ github.event.inputs.version }}-$(echo $GITHUB_SHA | cut -c1-7).
 
-          Lambda Layer ARNs:
           ${{ needs.mock-artifacts.outputs.layer-note }}
           EOF
 

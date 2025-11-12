@@ -29,4 +29,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Run AWS APM Agent
-        uses: ezhang6811/application-observability-for-aws@7150015
+        uses: ezhang6811/application-observability-for-aws@7150015159b816bf9edcf52fd01a3db3fa0bb150

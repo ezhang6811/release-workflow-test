@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  test-continue-on-error:
+  test-continue-on-error-WITHOUT-failsafe:
     runs-on: ubuntu-latest
     steps:
       - name: Step 1 - This will pass
@@ -41,7 +41,58 @@ jobs:
       - name: Step 5 - This runs after failures
         run: |
           echo "If you see this, it means the job continued despite failures"
-          echo "Job status will be SUCCESS even though steps 2 and 3 failed"
+          echo "⚠️ This job will show as PASSED even though steps 2 and 3 failed"
+
+  test-continue-on-error-WITH-failsafe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - This will pass
+        run: |
+          echo "This step passes successfully"
+          exit 0
+
+      - name: Step 2 - This will fail WITH continue-on-error
+        id: failing-step
+        continue-on-error: true
+        run: |
+          echo "This step is about to fail..."
+          echo "ERROR: Intentional failure for testing"
+          exit 1
+
+      - name: Step 3 - This will also fail WITH continue-on-error
+        id: another-failing-step
+        continue-on-error: true
+        run: |
+          echo "Another intentional failure"
+          ./non-existent-command
+          exit 1
+
+      - name: Step 4 - Check outcomes
+        run: |
+          echo "Step 2 outcome: ${{ steps.failing-step.outcome }}"
+          echo "Step 2 conclusion: ${{ steps.failing-step.conclusion }}"
+          echo "Step 3 outcome: ${{ steps.another-failing-step.outcome }}"
+          echo "Step 3 conclusion: ${{ steps.another-failing-step.conclusion }}"
+
+      - name: Step 5 - This runs after failures
+        run: |
+          echo "If you see this, it means the job continued despite failures"
+          echo "But we will check outcomes and fail the job if needed..."
+
+      - name: Step 6 - FAILSAFE - Check outcomes and fail if needed
+        if: always()
+        run: |
+          echo "🔍 Checking if any steps failed..."
+          if [ "${{ steps.failing-step.outcome }}" == "failure" ] || [ "${{ steps.another-failing-step.outcome }}" == "failure" ]; then
+            echo "❌ One or more steps failed!"
+            echo "  - Step 2 outcome: ${{ steps.failing-step.outcome }}"
+            echo "  - Step 3 outcome: ${{ steps.another-failing-step.outcome }}"
+            echo ""
+            echo "This job will now FAIL despite continue-on-error being set"
+            exit 1
+          else
+            echo "✅ All steps passed"
+          fi
 
   test-without-continue-on-error:
     runs-on: ubuntu-latest

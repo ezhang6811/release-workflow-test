@@ -1,0 +1,61 @@
+name: Test Continue-On-Error Behavior
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-continue-on-error:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - This will pass
+        run: |
+          echo "This step passes successfully"
+          exit 0
+
+      - name: Step 2 - This will fail WITH continue-on-error
+        id: failing-step
+        continue-on-error: true
+        run: |
+          echo "This step is about to fail..."
+          echo "ERROR: Intentional failure for testing"
+          exit 1
+
+      - name: Step 3 - This will also fail WITH continue-on-error
+        id: another-failing-step
+        continue-on-error: true
+        run: |
+          echo "Another intentional failure"
+          ./non-existent-command
+          exit 1
+
+      - name: Step 4 - Check outcomes
+        run: |
+          echo "Step 2 outcome: ${{ steps.failing-step.outcome }}"
+          echo "Step 2 conclusion: ${{ steps.failing-step.conclusion }}"
+          echo "Step 3 outcome: ${{ steps.another-failing-step.outcome }}"
+          echo "Step 3 conclusion: ${{ steps.another-failing-step.conclusion }}"
+
+      - name: Step 5 - This runs after failures
+        run: |
+          echo "If you see this, it means the job continued despite failures"
+          echo "Job status will be SUCCESS even though steps 2 and 3 failed"
+
+  test-without-continue-on-error:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step 1 - This will pass
+        run: |
+          echo "This step passes successfully"
+          exit 0
+
+      - name: Step 2 - This will fail WITHOUT continue-on-error
+        run: |
+          echo "This step will fail and stop the job"
+          exit 1
+
+      - name: Step 3 - This will never run
+        run: |
+          echo "You should never see this message"
